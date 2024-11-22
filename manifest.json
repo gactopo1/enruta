@@ -1,20 +1,20 @@
 {
     "name": "Mapa de Rutas",
     "short_name": "MapaRutas",
-    "start_url": "/enruta/index.html",
+    "start_url": "https://gactopo1.github.io/enruta/index.html",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#000000",
     "icons": [
         {
-            "src": "/enruta/ruta.png",
+            "src": "https://gactopo1.github.io/enruta/ruta.png",
             "sizes": "144x144",
             "type": "image/png",
             "purpose": "any"
         },
 
         {
-            "src": "/enruta/ruta512.png",
+            "src": "https://gactopo1.github.io/enruta/ruta512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any"
