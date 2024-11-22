@@ -22,7 +22,7 @@ let od = 'o';
 let marcadorActual = null;
 let velocidadAnterior = 0;
 
-navigator.serviceWorker.register('./sw.js');
+navigator.serviceWorker.register('./sw.js', { scope: './' });
 window.addEventListener("load", inicializarMapa);
 
 

@@ -6,7 +6,6 @@ self.addEventListener('install', function (event) {
                 './index.html',
                 './ruta.css',
                 './ruta.js',
-                './map.js',
                 './ruta.ico'
             ];
 
