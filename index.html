@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de ruta con velocimetro y odometro</title>
+    <link rel="icon" href="./ruta.ico" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="ruta.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.4.3/css/ol.css">
+    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.4.3/build/ol.js"></script>
+</head>
+<body>
+    <div id="menu">
+        <input type="button" value="☰" id="bmenu">
+        <label class="switch-vintage">
+            <input type="checkbox" id="vista">
+            <span class="boton-vintage"></span>
+        </label>
+        <div id="controlesRuta" style="display: none;">
+            <label class="switch-vintage">
+                <input type="radio" name="bRuta" id="origen" checked>
+                <span class="boton-vintage"></span>
+            </label>
+            <label class="switch-vintage" style="margin-left: 2px;">
+                <input type="radio" name="bRuta" id="destino">
+                <span class="boton-vintage"></span>
+            </label>
+            <label class="switch-vintage" style="margin-left: 2px;">
+                <input type="radio" name="bRuta" id="wayPoint">
+                <span class="boton-vintage"></span>
+            </label>
+
+            <input type="button" value="Calcular Ruta" id="calcularRuta" class="boton">
+        </div>
+    </div>
+    <div id="menuDesplegable" style="display: none">
+        <ul>
+            <li id="menuRuta">Ruta</li>
+            <li id="menuVelo">Velocímetro</li>
+            <li id="menuWP">Punto de interés</li>
+        </ul>
+    </div>    
+    <div id="datosRuta" style="display: none; margin-bottom: 10px;">
+        <label>Kms</label>
+        <label  class="etiqueta" id="kms"></label>
+        <label style="margin-left: 10px;">Recorridos</label>
+        <label  class="etiqueta" id="kmsR"></label>
+    </div>
+    <div id="velo" style="display: none;">
+        <div id="reloj">
+            <div id="speed">000</div>
+            <div class="needle"></div>
+        </div>
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <label>Kms recorridos</label>
+            <label  class="etiqueta" id="kmsRe"></label>
+        </div>
+    </div>
+    <div id="map"></div>
+    <script src="ruta.js"></script>
+</body>
+</html>

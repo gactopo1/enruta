@@ -1,0 +1,232 @@
+* {
+    box-sizing: border-box;
+}
+.etiqueta{
+    font-size: 12px;
+    width: 80px;
+    padding-left: 2px;
+    margin-left: 5px;
+    border-left: 1px solid #585656;
+    border-top: 1px solid #585656;
+    border-right: 1px solid #bbb8b8;
+    border-bottom: 1px solid #bbb8b8;
+}
+
+.posicion {
+    width: 20px;
+    height: 20px;
+    background-color: red;
+    border-radius: 50%;
+    border: 2px solid white;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+#principal{
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+}
+
+#map { 
+    display: block;
+    width: 100%; 
+    height: 100vh;
+}
+
+#controlesRuta {
+    display: flex;
+    flex: 1;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+
+#menu {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    background: white;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    z-index: 1000;
+}
+#bmenu{
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-right: 10px;
+    width: 25px;
+    height: 25px;
+}
+
+.boton {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.boton:hover {
+    background-color: #0056b3;
+}
+
+/* Estilo del menú desplegable */
+#menuDesplegable {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    /*transform: translateX(-100%);*/
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+    z-index: 2000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#menuDesplegable ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#menuDesplegable li {
+    font-size: 18px;
+    margin: 15px 0;
+    cursor: pointer;
+}
+
+/* Clase para mostrar el menú */
+#menuDesplegable.active {
+    transform: translateX(0);
+}
+
+.switch-vintage{
+    display: flex; 
+    align-items: center; 
+    flex-direction: column;
+}
+
+/* Ocultar el checkbox original */
+.switch-vintage input {
+    display: none;
+}
+
+/* Botón cilíndrico vintage */
+.switch-vintage .boton-vintage {
+    display: flex;
+    justify-content: center; /* Centrar horizontalmente */
+    align-items: center; /* Centrar verticalmente */
+    width: 25px;
+    height: 25px;
+    background-color: #e0e0d1; /* Color claro */
+    border-radius: 40%; /* Botón redondo */
+    border: 3px solid #007bff; /* Borde */
+    box-shadow: 0 0 0 5px rgba(41, 11, 212, 0.5), /* Alto del cilindro (5 cm de altura) */
+                inset 0 0 5px rgba(0, 0, 0, 0.3); /* Efecto interior */
+    font-size: 10px;
+    font-family: 'Courier New', Courier, monospace; /* Fuente retro */
+    color: #12016e; /* Texto */
+    cursor: pointer;
+    transition: all 0.3s ease; /* Transición suave */
+}
+
+/* Estado presionado (cuando el checkbox está seleccionado) */
+.switch-vintage input:checked + .boton-vintage {
+    background-color: #007bff; 
+    color: #f0f0f0; /* Texto claro */
+    box-shadow: 0 0 0 2px rgba(41, 11, 212,0.7), /* Reducir a 2 cm de altura */
+                inset 0 0 5px rgba(0, 0, 0, 0.5); /* Mayor profundidad interior */
+}
+
+/* Texto dinámico */
+.switch-vintage input[type="checkbox"]:checked + .boton-vintage::before {
+    content: 'Map';
+}
+
+.switch-vintage input[type="checkbox"] + .boton-vintage::before {
+    content: 'Sat';
+}
+
+.switch-vintage input[type="radio"]#origen:checked + .boton-vintage::before {
+    content: 'Ori';
+}
+.switch-vintage input[type="radio"]#origen + .boton-vintage::before {
+    content: 'Ori';
+}
+.switch-vintage input[type="radio"]#destino:checked + .boton-vintage::before {
+    content: 'Des';
+}
+.switch-vintage input[type="radio"]#destino + .boton-vintage::before {
+    content: 'Des';
+}
+.switch-vintage input[type="radio"]#wayPoint:checked + .boton-vintage::before {
+    content: 'WP';
+}
+.switch-vintage input[type="radio"]#wayPoint + .boton-vintage::before {
+    content: 'WP';
+}
+
+#velo {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+#reloj {
+    display: flex;
+    position: relative;
+    /*justify-content: center;
+    align-items: center;*/
+    width: 150px;
+    height: 150px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+    background: #000000;
+    box-shadow: 0 4px 8px rgb(0, 0, 0);
+}
+
+/* Estilo del número */
+@font-face {
+    font-family: 'Digital7';
+    src: url('digital-7.ttf') format('truetype');
+}
+#speed {
+    position: relative;
+    top: 50px;
+    left: 10px;
+    font-size: 42px;
+    font-weight: bold;
+    font-family: 'Digital7', sans-serif;
+    color: #ffffff;
+
+}
+
+/* Aguja del velocímetro */
+.needle {
+    width: 5px;
+    height: 65px;
+    background: rgb(250, 0, 0);
+    border:1px solid #ffffff;
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform-origin: bottom center;
+    transform: rotate(0deg);
+    transition: transform 0.3s ease;
+}
+
