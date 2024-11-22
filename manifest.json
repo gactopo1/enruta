@@ -25,6 +25,13 @@
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any"
+        },
+        {
+            "src": "https://gactopo1.github.io/enruta/maskable_icon.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+            
         }
 
     ]
