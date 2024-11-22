@@ -186,7 +186,7 @@ async function submenuVelo() {
     const centro = ol.proj.fromLonLat(posicion);
     ponerMarcador(posicion);
     ajustarZoom3km(centro);
-    actualizarPosicionSimulada()
+    actualizarPosicion()
 }
 
 function submenuWP() {
