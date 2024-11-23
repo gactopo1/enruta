@@ -174,7 +174,11 @@ function submenuRuta() {
 async function submenuVelo() {
     document.getElementById('controlesRuta').style.display="none";
     document.getElementById('velo').style.display="flex";
-    
+    let datosRuta = document.getElementById('datosRuta');
+    if(datosRuta.style.display='none'){
+        datosRuta.style.display='flex';
+    }
+
     let posicion=[0,0];
     //centrar mapa
     try{
