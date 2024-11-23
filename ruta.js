@@ -639,7 +639,7 @@ function obtenerGeometria(mapa) {
 }
 
 function grabarLocalStorage(datos) {
-    localStorage.setItem('rutaDatos', JSON.stringify(datos));
+    localStorage.setItem('rutaDatosLocal', JSON.stringify(datos));
 }
 
 function leerLocalStorage() {
