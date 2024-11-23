@@ -91,6 +91,7 @@ async function inicializarMapa() {
 
     // Dibujar rutas guardadas
     if (datosRutaLocal.rutas.length > 0) {
+        document.getElementById('datosRuta').style.display='flex';
         datosRutaLocal.rutas.forEach((ruta) => {
             const geometria = ruta.geometria.map(coord => 
                 ol.proj.fromLonLat([coord[0], coord[1]])
@@ -313,6 +314,7 @@ async function calcularRuta() {
                 wp,
                 geometria: decodedGeometry,
                 km: km.toFixed(2),
+                kmR: 0,
             };
 
             // Verificar duplicados antes de guardar
@@ -451,6 +453,12 @@ function actualizarInteraccionSeleccion() {
                 // Calcular la longitud en metros
                 const km = ol.sphere.getLength(geometry) / 1000;
                 document.getElementById('kms').innerText = km.toFixed(2);
+                //ver si esta guardada y actualizar kmRecorridos
+                datosRutaLocal.rutas.forEach(ruta =>{
+                    if (ruta.km = km){
+                        document.getElementById('kmsR').innerText = ruta.kmR.toFixed(2);
+                    }
+                });
             }
         });
     });
