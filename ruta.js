@@ -21,12 +21,20 @@ let wp=[];
 let od = 'o';
 let marcadorActual = null;
 let velocidadAnterior = 0;
+let datosRutaLocal = null;
 
 navigator.serviceWorker.register('./sw.js', { scope: './' });
 window.addEventListener("load", inicializarMapa);
 
 
 async function inicializarMapa() {
+    datosRutaLocal = leerLocalStorage();
+    if (!datosRutaLocal) { 
+        datosRutaLocal = { 
+            rutas: [],
+         };
+        grabarLocalStorage(datosRutaLocal);
+    }
     try {
         const coords = await obtenerPosicion();
         mapInitLatitude = coords.latitude;
@@ -69,11 +77,6 @@ async function inicializarMapa() {
         view: vista, // Asocia la vista al mapa
     });
 
-//    map.create(mapRef, mapInitLongitude, mapInitLatitude, mapZoom);
-//    baseLayer = map.map.getLayers().getArray().indexOf(0);
-
-    // Crear la fuente vectorial para los marcadores
-
     // Crear la capa vectorial para los marcadores
     markerLayer = new ol.layer.Vector({
         source: markerSource,
@@ -86,8 +89,33 @@ async function inicializarMapa() {
         }),
     });
 
-    // Agregar la capa de marcadores al mapa
-    //map.map.addLayer(markerLayer);
+    // Dibujar rutas guardadas
+    if (datosRutaLocal.rutas.length > 0) {
+        datosRutaLocal.rutas.forEach((ruta) => {
+            const geometria = ruta.geometria.map(coord => 
+                ol.proj.fromLonLat([coord[0], coord[1]])
+            );
+
+            const routeLine = new ol.geom.LineString(geometria);
+
+            const routeSource = new ol.source.Vector({
+                features: [new ol.Feature({ geometry: routeLine })],
+            });
+
+            const routeLayer = new ol.layer.Vector({
+                source: routeSource,
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'blue',
+                        width: 4,
+                    }),
+                }),
+            });
+
+            // Agregar la capa al mapa
+            mapa.addLayer(routeLayer);
+        });
+    }
     inicializarEventosMapa();
 }
 
@@ -98,7 +126,7 @@ function obtenerPosicion() {
             (error) => reject(error),
             {
                 enableHighAccuracy: true, // Usa GPS para mayor precisión
-                timeout: 5000, // Tiempo máximo para obtener la ubicación
+                timeout: 1000, // Tiempo máximo para obtener la ubicación
                 maximumAge: 0 // No usa datos en caché
             }
         );
@@ -221,13 +249,9 @@ async function calcularRuta() {
     const coordinates = [[origen.lon, origen.lat], ...wp, [destino.lon, destino.lat]];
     const body = JSON.stringify({ coordinates });
 
-    //const url = "https://api.openrouteservice.org/v2/directions/driving-car/json";
     const url = "https://api.openrouteservice.org/v2/directions/driving-car";
-    //const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${origen.lon},${origen.lat}&end=${destino.lon},${destino.lat}${waypointsParam}`;
     
     try {
-        //const response = await fetch(url);
-
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -239,7 +263,6 @@ async function calcularRuta() {
         });
 
         const data = await response.json();
-        console.log(data.routes);
         if (data.routes && data.routes.length > 0) {
             // Obtener la ruta desde la respuesta
             const route = data.routes[0];
@@ -280,6 +303,29 @@ async function calcularRuta() {
             if(datosRuta.style.display='none'){
                 datosRuta.style.display='flex';
             }
+
+            // Guardar la ruta en datosRuta.rutas
+            datosRutaLocal = leerLocalStorage();
+            const nuevaRuta = {
+                origen,
+                destino,
+                wp,
+                geometria: decodedGeometry,
+                km: km.toFixed(2),
+            };
+
+            // Verificar duplicados antes de guardar
+            const yaExiste = datosRutaLocal.rutas.some(r => 
+                JSON.stringify(r.geometria) === JSON.stringify(nuevaRuta.geometria)
+            );
+
+            if (!yaExiste) {
+                datosRutaLocal.rutas.push(nuevaRuta);
+                grabarLocalStorage(datosRutaLocal);
+                console.log("Ruta guardada correctamente.");
+            } else {
+                console.log("La ruta ya existe, no se guardará duplicada.");
+            }            
         }
     } catch (error) {
         console.error("Error al obtener la ruta:", error);
@@ -590,4 +636,13 @@ function obtenerGeometria(mapa) {
 
     console.error("No se encontró ninguna geometría de tipo LineString.");
     return null;
+}
+
+function grabarLocalStorage(datos) {
+    localStorage.setItem('rutaDatos', JSON.stringify(datos));
+}
+
+function leerLocalStorage() {
+    const data = localStorage.getItem('rutaDatos');
+    return data ? JSON.parse(data) : null;
 }
