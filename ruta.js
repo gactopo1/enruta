@@ -315,7 +315,7 @@ function actualizarPosicion() {
         }, error => console.error('Error al obtener ubicación:', error), {
             enableHighAccuracy: true,
             maximumAge: 0,
-            timeout: 5000
+            timeout: 1000
         });
     } else {
         alert("La geolocalización no está disponible en este dispositivo.");
@@ -437,7 +437,7 @@ function actualizarVelocimetro(velocidad) {
     const speedElement = document.getElementById('speed');
     const needle = document.querySelector('.needle');
     // Suavizar la transición del velocímetro
-    let velocidadSuavizada = (velocidadAnterior * 0.7) + (velocidad * 0.3);
+    let velocidadSuavizada = (velocidadAnterior * 0.3) + (velocidad * 0.7);
     // Limitar velocidad entre 0 y 180
     velocidadSuavizada = Math.min(180, Math.max(0, velocidadSuavizada));
     velocidadAnterior = velocidadSuavizada;
