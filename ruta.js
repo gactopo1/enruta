@@ -643,6 +643,6 @@ function grabarLocalStorage(datos) {
 }
 
 function leerLocalStorage() {
-    const data = localStorage.getItem('rutaDatos');
+    const data = localStorage.getItem('rutaDatosLocal');
     return data ? JSON.parse(data) : null;
 }
