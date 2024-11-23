@@ -115,6 +115,7 @@ async function inicializarMapa() {
             // Agregar la capa al mapa
             mapa.addLayer(routeLayer);
         });
+        actualizarInteraccionSeleccion();
     }
     inicializarEventosMapa();
 }
