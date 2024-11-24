@@ -26,6 +26,7 @@ let datosRutaLocal = null;
 let odometro = 0;
 let kmsRuta = 0;
 let indiceRuta = 0;
+let rutaSeleccionada = false;
 
 navigator.serviceWorker.register('./sw.js', { scope: './' });
 window.addEventListener("load", inicializarMapa);
@@ -159,6 +160,7 @@ async function inicializarMapa() {
                                 odometro=ruta.kmR;
                                 posicionAnterior = ruta.posicionFinal;
                                 indiceRuta=index;
+                                rutaSeleccionada=true;
                             }
                         });
                     }
@@ -367,6 +369,7 @@ async function calcularRuta() {
                 datosRutaLocal.rutas.push(nuevaRuta);
                 grabarLocalStorage(datosRutaLocal);
                 indiceRuta=datosRutaLocal.rutas.length-1;
+                rutaSeleccionada=true;
                 console.log("Ruta guardada correctamente.");
             } else {
                 console.log("La ruta ya existe, no se guardará duplicada.");
@@ -408,8 +411,10 @@ function actualizarPosicion() {
                 kmsRuta=kmsRuta+distancia;
             }
             posicionAnterior=[longitude,latitude];
-            datosRutaLocal.rutas[indiceRuta].kmR = kmsRuta;
-            datosRutaLocal.rutas[indiceRuta].posicionFinal = posicionAnterior;
+            if (datosRutaLocal.rutas.length > 0){
+                datosRutaLocal.rutas[indiceRuta].kmR = kmsRuta;
+                datosRutaLocal.rutas[indiceRuta].posicionFinal = posicionAnterior;
+            }
             datosRutaLocal.totalKms = odometro;
             grabarLocalStorage(datosRutaLocal);
             actualizarVelocimetro(velocidadKmH);
@@ -510,6 +515,8 @@ function actualizarInteraccionSeleccion() {
                 datosRutaLocal.rutas.forEach(ruta =>{
                     if (ruta.km = km){
                         document.getElementById('kmsR').innerText = ruta.kmR.toFixed(2);
+                        rutaSeleccionada=true;
+                        kmsRuta=ruta.kmR;
                     }
                 });
             }
