@@ -6,8 +6,9 @@ let baseLayer = null;
 let satelliteLayer = null;
 let markerLayer = null;
 let markerSource = null;
-let mapInitLatitude = 0;
-let mapInitLongitude = 0;
+let posicionLonLat = [0,0];
+let posicionWebMercator = [0,0];
+let posicionAnterior = [0,0];
 let selectInteraction;
 let origen={
     lat: 0,
@@ -22,6 +23,9 @@ let od = 'o';
 let marcadorActual = null;
 let velocidadAnterior = 0;
 let datosRutaLocal = null;
+let odometro = 0;
+let kmsRuta = 0;
+let indiceRuta = 0;
 
 navigator.serviceWorker.register('./sw.js', { scope: './' });
 window.addEventListener("load", inicializarMapa);
@@ -32,16 +36,18 @@ async function inicializarMapa() {
     if (!datosRutaLocal) { 
         datosRutaLocal = { 
             rutas: [],
+            totalKms: 0
          };
         grabarLocalStorage(datosRutaLocal);
     }
+    odometro=datosRutaLocal.totalKms;
+    document.getElementById('kmT').innerText=odometro.toFixed(2);
+
     try {
-        const coords = await obtenerPosicion();
-        mapInitLatitude = coords.latitude;
-        mapInitLongitude = coords.longitude;
+        posicionLonLat = await obtenerPosicion();
+        posicionWebMercator = ol.proj.fromLonLat(posicionLonLat);
     } catch (error) {
         console.error('Error al obtener la ubicación:', error);
-        // Usar valores predeterminados si falla
     }
 
     // Crear el mapa después de obtener la posición
@@ -67,7 +73,7 @@ async function inicializarMapa() {
     });
 
     vista = new ol.View({
-        center: ol.proj.fromLonLat([mapInitLongitude, mapInitLatitude]), // Coordenadas de inicio
+        center: posicionWebMercator, // Coordenadas de inicio
         zoom: 12, // Nivel de zoom inicial
         projection: 'EPSG:3857', // Proyección del mapa
     });
@@ -121,13 +127,12 @@ async function inicializarMapa() {
         actualizarInteraccionSeleccion();
         //seleccionar la ruta mas cercana a la posicion actual
         try {
-            const userPosition = ol.proj.fromLonLat([mapInitLongitude, mapInitLatitude]); // Convertir la posición del usuario
             let nearestLayer = null;
             let minDistance = Infinity;
 
             layers.forEach(({ layer, geometry }) => {
-                const closestPoint = geometry.getClosestPoint(userPosition); // Punto más cercano en la geometría
-                const distance = ol.sphere.getDistance(userPosition, closestPoint); // Calcular la distancia en metros
+                const closestPoint = geometry.getClosestPoint(posicionWebMercator); // Punto más cercano en la geometría
+                const distance = ol.sphere.getDistance(posicionWebMercator, closestPoint); // Calcular la distancia en metros
 
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -148,9 +153,12 @@ async function inicializarMapa() {
                         const km = ol.sphere.getLength(geometry) / 1000;
                         document.getElementById('kms').innerText = km.toFixed(2);
                         //ver si esta guardada y actualizar kmRecorridos
-                        datosRutaLocal.rutas.forEach(ruta =>{
+                        datosRutaLocal.rutas.forEach(ruta,index =>{
                             if (ruta.km = km){
                                 document.getElementById('kmsR').innerText = ruta.kmR.toFixed(2);
+                                odometro=ruta.kmR;
+                                posicionAnterior = ruta.posicionFinal;
+                                indiceRuta=index;
                             }
                         });
                     }
@@ -161,6 +169,9 @@ async function inicializarMapa() {
         }        
     }
     inicializarEventosMapa();
+    ponerMarcador(posicionWebMercator);
+    ajustarZoom3km(posicionWebMercator);
+    actualizarPosicion()
 }
 
 function obtenerPosicion() {
@@ -250,19 +261,6 @@ async function submenuVelo() {
     if(datosRuta.style.display='none'){
         datosRuta.style.display='flex';
     }
-
-    let posicion=[0,0];
-    //centrar mapa
-    try{
-        const coords = await obtenerPosicion();
-        posicion=[coords.longitude,coords.latitude];
-    } catch (error) {
-        console.error('Error al obtener la ubicación:', error);
-    }
-    const centro = ol.proj.fromLonLat(posicion);
-    ponerMarcador(posicion);
-    ajustarZoom3km(centro);
-    actualizarPosicion()
 }
 
 function submenuWP() {
@@ -357,6 +355,7 @@ async function calcularRuta() {
                 geometria: decodedGeometry,
                 km: km.toFixed(2),
                 kmR: 0,
+                posicionFinal: [0,0],
             };
 
             // Verificar duplicados antes de guardar
@@ -367,6 +366,7 @@ async function calcularRuta() {
             if (!yaExiste) {
                 datosRutaLocal.rutas.push(nuevaRuta);
                 grabarLocalStorage(datosRutaLocal);
+                indiceRuta=datosRutaLocal.rutas.length-1;
                 console.log("Ruta guardada correctamente.");
             } else {
                 console.log("La ruta ya existe, no se guardará duplicada.");
@@ -397,10 +397,21 @@ function actualizarPosicion() {
             marcadorActual.setGeometry(new ol.geom.Point(posicionProyectada));
 
             mapa.getView().setCenter(posicionProyectada);
-            mapa.getView().setZoom(zoom);            
+            //mapa.getView().setZoom(zoom);            
 
             // Calcular y actualizar la velocidad
             const velocidadKmH = speed ? (speed * 3.6) : 0; // Convertir de m/s a km/h
+            // Calcular la distancia
+            if (posicionAnterior[0]!==0 && posicionAnterior[1]!==0){
+                const distancia = ol.sphere.getDistance(posicionAnterior, [longitude,latitude]);
+                odometro=odometro+distancia;
+                kmsRuta=kmsRuta+distancia;
+            }
+            posicionAnterior=[longitude,latitude];
+            datosRutaLocal.rutas[indiceRuta].kmR = kmsRuta;
+            datosRutaLocal.rutas[indiceRuta].posicionFinal = posicionAnterior;
+            datosRutaLocal.totalKms = odometro;
+            grabarLocalStorage(datosRutaLocal);
             actualizarVelocimetro(velocidadKmH);
 
         }, error => console.error('Error al obtener ubicación:', error), {
@@ -542,6 +553,7 @@ function actualizarVelocimetro(velocidad) {
     // Calcular el ángulo de la aguja (0-180 grados)
     const angle = (velocidadSuavizada / 180) * 180; // Ajustar para el rango de 0-180
     needle.style.transform = `rotate(${angle}deg)`;
+    document.getElementById('kmR').innerText=odometro.toFixed(2);
 }
 
 function ajustarZoom3km(center) {
