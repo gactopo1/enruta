@@ -142,6 +142,18 @@ async function inicializarMapa() {
                     const featureToSelect = features[0];
                     selectInteraction.getFeatures().clear(); // Limpiar selección previa
                     selectInteraction.getFeatures().push(featureToSelect); // Seleccionar la característica
+                    const geometry = featureToSelect.getGeometry();
+                    if (geometry.getType() === 'LineString') {
+                        // Calcular la longitud en metros
+                        const km = ol.sphere.getLength(geometry) / 1000;
+                        document.getElementById('kms').innerText = km.toFixed(2);
+                        //ver si esta guardada y actualizar kmRecorridos
+                        datosRutaLocal.rutas.forEach(ruta =>{
+                            if (ruta.km = km){
+                                document.getElementById('kmsR').innerText = ruta.kmR.toFixed(2);
+                            }
+                        });
+                    }
                 }
             }
         } catch (error) {
