@@ -92,6 +92,7 @@ async function inicializarMapa() {
     // Dibujar rutas guardadas
     if (datosRutaLocal.rutas.length > 0) {
         document.getElementById('datosRuta').style.display='flex';
+        const layers = []; // Guardar las capas de las rutas para referencia
         datosRutaLocal.rutas.forEach((ruta) => {
             const geometria = ruta.geometria.map(coord => 
                 ol.proj.fromLonLat([coord[0], coord[1]])
@@ -115,6 +116,7 @@ async function inicializarMapa() {
 
             // Agregar la capa al mapa
             mapa.addLayer(routeLayer);
+            layers.push({ layer: routeLayer, geometry: routeLine });
         });
         actualizarInteraccionSeleccion();
         //seleccionar la ruta mas cercana a la posicion actual
