@@ -117,6 +117,34 @@ async function inicializarMapa() {
             mapa.addLayer(routeLayer);
         });
         actualizarInteraccionSeleccion();
+        //seleccionar la ruta mas cercana a la posicion actual
+        try {
+            const userPosition = ol.proj.fromLonLat([mapInitLongitude, mapInitLatitude]); // Convertir la posición del usuario
+            let nearestLayer = null;
+            let minDistance = Infinity;
+
+            layers.forEach(({ layer, geometry }) => {
+                const closestPoint = geometry.getClosestPoint(userPosition); // Punto más cercano en la geometría
+                const distance = ol.sphere.getDistance(userPosition, closestPoint); // Calcular la distancia en metros
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestLayer = layer;
+                }
+            });
+
+            if (nearestLayer) {
+                // Seleccionar la capa más cercana
+                const features = nearestLayer.getSource().getFeatures();
+                if (features.length > 0) {
+                    const featureToSelect = features[0];
+                    selectInteraction.getFeatures().clear(); // Limpiar selección previa
+                    selectInteraction.getFeatures().push(featureToSelect); // Seleccionar la característica
+                }
+            }
+        } catch (error) {
+            console.error("Error al seleccionar la ruta más cercana:", error);
+        }        
     }
     inicializarEventosMapa();
 }
