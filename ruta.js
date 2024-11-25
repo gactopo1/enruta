@@ -614,7 +614,7 @@ function ponerMarcador(posicion){
 }
 
 function simuladorRuta(geometria, callback, errorCallback, options = {}) {
-    if (geometrie){
+    if (geometria){
         const defaultOptions = {
             enableHighAccuracy: true,
             timeout: 1000, // Intervalo entre actualizaciones (ms)
