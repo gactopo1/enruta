@@ -27,6 +27,7 @@ let odometro = 0;
 let kmsRuta = 0;
 let indiceRuta = 0;
 let rutaSeleccionada = false;
+let siActulizaMapa = true;
 
 navigator.serviceWorker.register('./sw.js', { scope: './' });
 window.addEventListener("load", inicializarMapa);
@@ -173,7 +174,7 @@ async function inicializarMapa() {
     inicializarEventosMapa();
     ponerMarcador(posicionWebMercator);
     ajustarZoom3km(posicionWebMercator);
-    actualizarPosicion()
+    actualizarPosicionSimulada()
 }
 
 function obtenerPosicion() {
@@ -254,11 +255,13 @@ function inicializarEventosMapa() {
 function submenuRuta() {
     document.getElementById('controlesRuta').style.display="flex";
     document.getElementById('velo').style.display="none";
+    siActulizaMapa=false;
 }
 
 async function submenuVelo() {
     document.getElementById('controlesRuta').style.display="none";
     document.getElementById('velo').style.display="flex";
+    siActulizaMapa=true;
     let datosRuta = document.getElementById('datosRuta');
     if(datosRuta.style.display='none'){
         datosRuta.style.display='flex';
@@ -271,11 +274,13 @@ function submenuWP() {
 }
 
 function seleccionarOrigen() {
+    siActulizaMapa=false;
     od='o';
     wp=[];
 }
 
 function seleccionarDestino() {
+    siActulizaMapa=false;
     od='d';
     wp=[];
 }
@@ -285,6 +290,7 @@ function seleccionarWP(){
 }
 
 async function calcularRuta() {
+    siActulizaMapa=true;
     if (!origen || !destino) return alert('Selecciona origen y destino');
 
     const apiKey = '5b3ce3597851110001cf6248f5cba351b26a46b3a0766a42b429ae6e'; // Cambiar con tu API Key
@@ -396,17 +402,16 @@ function actualizarPosicion() {
             } else {
                 zoom = 11;
             }
-
-            marcadorActual.setGeometry(new ol.geom.Point(posicionProyectada));
-
-            mapa.getView().setCenter(posicionProyectada);
-            //mapa.getView().setZoom(zoom);            
-
+            if(siActulizaMapa){
+                marcadorActual.setGeometry(new ol.geom.Point(posicionProyectada));
+                mapa.getView().setCenter(posicionProyectada);
+                mapa.getView().setZoom(zoom);            
+            }
             // Calcular y actualizar la velocidad
             const velocidadKmH = speed ? (speed * 3.6) : 0; // Convertir de m/s a km/h
             // Calcular la distancia
             if (posicionAnterior[0]!==0 && posicionAnterior[1]!==0){
-                const distancia = ol.sphere.getDistance(posicionAnterior, [longitude,latitude]);
+                const distancia = ol.sphere.getDistance(posicionAnterior, [longitude,latitude])/1000;
                 odometro=odometro+distancia;
                 kmsRuta=kmsRuta+distancia;
             }
@@ -416,6 +421,8 @@ function actualizarPosicion() {
                 datosRutaLocal.rutas[indiceRuta].posicionFinal = posicionAnterior;
             }
             datosRutaLocal.totalKms = odometro;
+            document.getElementById('kmT').innerText=odometro.toFixed(2);
+            dicument.getElementById('kmR').innerText=kmsRuta.toFixed(2);
             grabarLocalStorage(datosRutaLocal);
             actualizarVelocimetro(velocidadKmH);
 
@@ -445,14 +452,28 @@ function actualizarPosicionSimulada() {
         } else {
             zoom = 11;
         }
-
-        marcadorActual.setGeometry(new ol.geom.Point(posicionProyectada));
-
-        mapa.getView().setCenter(posicionProyectada);
-        mapa.getView().setZoom(zoom);            
-
+        if(siActulizaMapa){
+            marcadorActual.setGeometry(new ol.geom.Point(posicionProyectada));
+            mapa.getView().setCenter(posicionProyectada);
+            mapa.getView().setZoom(zoom);            
+        }
         // Calcular y actualizar la velocidad
         const velocidadKmH = speed ? (speed * 3.6) : 0; // Convertir de m/s a km/h
+        // Calcular la distancia
+        if (posicionAnterior[0]!==0 && posicionAnterior[1]!==0){
+            const distancia = ol.sphere.getDistance(posicionAnterior, [longitude,latitude])/1000;
+            odometro=odometro+distancia;
+            kmsRuta=kmsRuta+distancia;
+        }
+        posicionAnterior=[longitude,latitude];
+        if (datosRutaLocal.rutas.length > 0){
+            datosRutaLocal.rutas[indiceRuta].kmR = kmsRuta;
+            datosRutaLocal.rutas[indiceRuta].posicionFinal = posicionAnterior;
+        }
+        datosRutaLocal.totalKms = odometro;
+        document.getElementById('kmT').innerText=odometro.toFixed(2);
+        dicument.getElementById('kmR').innerText=kmsRuta.toFixed(2);
+        grabarLocalStorage(datosRutaLocal);
         actualizarVelocimetro(velocidadKmH);
 
     }, error => console.error('Error al obtener ubicación:', error),{ velocidadMaxima: 90, aceleracion: 3 });
@@ -560,7 +581,6 @@ function actualizarVelocimetro(velocidad) {
     // Calcular el ángulo de la aguja (0-180 grados)
     const angle = (velocidadSuavizada / 180) * 180; // Ajustar para el rango de 0-180
     needle.style.transform = `rotate(${angle}deg)`;
-    document.getElementById('kmR').innerText=odometro.toFixed(2);
 }
 
 function ajustarZoom3km(center) {
@@ -592,9 +612,6 @@ function ponerMarcador(posicion){
     // Agregar el marcador a la fuente vectorial de la capa `markerLayer`
     markerSource.addFeature(marcadorActual);
 }
-
-
-
 
 function simuladorRuta(geometria, callback, errorCallback, options = {}) {
     const defaultOptions = {
