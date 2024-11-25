@@ -174,7 +174,7 @@ async function inicializarMapa() {
     inicializarEventosMapa();
     ponerMarcador(posicionWebMercator);
     ajustarZoom3km(posicionWebMercator);
-    actualizarPosicion()
+    actualizarPosicionSimulada()
 }
 
 function obtenerPosicion() {
@@ -438,45 +438,47 @@ function actualizarPosicion() {
 
 function actualizarPosicionSimulada() {
     const geometria = obtenerGeometria(mapa);
-    simuladorRuta(geometria, (pos) => {
-        const { latitude, longitude, accuracy, speed } = pos.coords;
-        const posicionProyectada = ol.proj.fromLonLat([longitude, latitude]);
-        // Calcular un zoom dinámico en función de la precisión
-        let zoom;
-        if (accuracy <= 10) {
-            zoom = 17;
-        } else if (accuracy <= 50) {
-            zoom = 15;
-        } else if (accuracy <= 100) {
-            zoom = 13;
-        } else {
-            zoom = 11;
-        }
-        if(siActulizaMapa){
-            marcadorActual.setGeometry(new ol.geom.Point(posicionProyectada));
-            mapa.getView().setCenter(posicionProyectada);
-            mapa.getView().setZoom(zoom);            
-        }
-        // Calcular y actualizar la velocidad
-        const velocidadKmH = speed ? (speed * 3.6) : 0; // Convertir de m/s a km/h
-        // Calcular la distancia
-        if (posicionAnterior[0]!==0 && posicionAnterior[1]!==0){
-            const distancia = ol.sphere.getDistance(posicionAnterior, [longitude,latitude])/1000;
-            odometro=odometro+distancia;
-            kmsRuta=kmsRuta+distancia;
-        }
-        posicionAnterior=[longitude,latitude];
-        if (datosRutaLocal.rutas.length > 0){
-            datosRutaLocal.rutas[indiceRuta].kmR = kmsRuta;
-            datosRutaLocal.rutas[indiceRuta].posicionFinal = posicionAnterior;
-        }
-        datosRutaLocal.totalKms = odometro;
-        document.getElementById('kmT').innerText=odometro.toFixed(2);
-        dicument.getElementById('kmR').innerText=kmsRuta.toFixed(2);
-        grabarLocalStorage(datosRutaLocal);
-        actualizarVelocimetro(velocidadKmH);
-
-    }, error => console.error('Error al obtener ubicación:', error),{ velocidadMaxima: 90, aceleracion: 3 });
+    if (geometria){
+        simuladorRuta(geometria, (pos) => {
+            const { latitude, longitude, accuracy, speed } = pos.coords;
+            const posicionProyectada = ol.proj.fromLonLat([longitude, latitude]);
+            // Calcular un zoom dinámico en función de la precisión
+            let zoom;
+            if (accuracy <= 10) {
+                zoom = 17;
+            } else if (accuracy <= 50) {
+                zoom = 15;
+            } else if (accuracy <= 100) {
+                zoom = 13;
+            } else {
+                zoom = 11;
+            }
+            if(siActulizaMapa){
+                marcadorActual.setGeometry(new ol.geom.Point(posicionProyectada));
+                mapa.getView().setCenter(posicionProyectada);
+                mapa.getView().setZoom(zoom);            
+            }
+            // Calcular y actualizar la velocidad
+            const velocidadKmH = speed ? (speed * 3.6) : 0; // Convertir de m/s a km/h
+            // Calcular la distancia
+            if (posicionAnterior[0]!==0 && posicionAnterior[1]!==0){
+                const distancia = ol.sphere.getDistance(posicionAnterior, [longitude,latitude])/1000;
+                odometro=odometro+distancia;
+                kmsRuta=kmsRuta+distancia;
+            }
+            posicionAnterior=[longitude,latitude];
+            if (datosRutaLocal.rutas.length > 0){
+                datosRutaLocal.rutas[indiceRuta].kmR = kmsRuta;
+                datosRutaLocal.rutas[indiceRuta].posicionFinal = posicionAnterior;
+            }
+            datosRutaLocal.totalKms = odometro;
+            document.getElementById('kmT').innerText=odometro.toFixed(2);
+            dicument.getElementById('kmR').innerText=kmsRuta.toFixed(2);
+            grabarLocalStorage(datosRutaLocal);
+            actualizarVelocimetro(velocidadKmH);
+    
+        }, error => console.error('Error al obtener ubicación:', error),{ velocidadMaxima: 90, aceleracion: 3 });
+    }
 }
 
 
@@ -616,84 +618,81 @@ function ponerMarcador(posicion){
 }
 
 function simuladorRuta(geometria, callback, errorCallback, options = {}) {
-    if (geometria){
-        const defaultOptions = {
-            enableHighAccuracy: true,
-            timeout: 1000, // Intervalo entre actualizaciones (ms)
-            maximumAge: 0,
-            velocidadMaxima: 90, // km/h
-            aceleracion: 5 // Aceleración en m/s²
-        };
-        options = { ...defaultOptions, ...options };
-    
-        // Obtener coordenadas de la geometría
-        const routeCoords = geometria.getCoordinates();
-    
-        if (!routeCoords || routeCoords.length < 2) {
-            errorCallback(new Error("La geometría debe contener al menos dos puntos."));
-            return null;
-        }
-    
-        let currentIndex = 0; // Índice del punto actual
-        let watchId;
-        let velocidadActual = 0; // Velocidad inicial en m/s
-        let tiempoTranscurrido = 0; // Tiempo total transcurrido en segundos
-    
-        function avanzar() {
-            if (currentIndex >= routeCoords.length - 1) {
-                clearInterval(watchId);
-                console.log("Simulación completada.");
-                callback(null); // Notificar el final
-                return;
-            }
-    
-            const [currentLon, currentLat] = ol.proj.toLonLat(routeCoords[currentIndex]);
-            const [nextLon, nextLat] = ol.proj.toLonLat(routeCoords[currentIndex + 1]);
-    
-            const distancia = ol.sphere.getDistance([currentLon, currentLat], [nextLon, nextLat]);
-            const tiempoIntervalo = options.timeout / 1000; // Tiempo en segundos para cada intervalo
-    
-            // Incrementar la velocidad con aceleración constante
-            velocidadActual += options.aceleracion * tiempoIntervalo;
-            const velocidadMaximaMS = options.velocidadMaxima * 1000 / 3600; // km/h a m/s
-            velocidadActual = Math.min(velocidadActual, velocidadMaximaMS); // Limitar al máximo
-    
-            tiempoTranscurrido += tiempoIntervalo;
-    
-            // Avanzar al siguiente punto si la distancia es menor o igual al desplazamiento
-            if (velocidadActual * tiempoTranscurrido >= distancia) {
-                currentIndex++;
-            }
-    
-            // Calcular la posición actual interpolando entre puntos
-            const currentProyectada = ol.proj.fromLonLat([currentLon,currentLat]);
-            const nextProyectada = ol.proj.fromLonLat([nextLon,nextLat]);
-            const progress = Math.min(1, (velocidadActual * tiempoIntervalo) / distancia);
-            const currentLatInterpolado = currentProyectada[1] + progress * (nextProyectada[1] - currentProyectada[1]);
-            const currentLonInterpolado = currentProyectada[0] + progress * (nextProyectada[0] - currentProyectada[0]);
-            const currentLonLat = ol.proj.toLonLat([currentLonInterpolado,currentLatInterpolado]);
-            const position = {
-                coords: {
-                    latitude: currentLonLat[1],
-                    longitude: currentLonLat[0],
-                    accuracy: options.enableHighAccuracy ? 5 : 50,
-                    speed: velocidadActual // m/s
-                },
-                timestamp: Date.now()
-            };
-    
-            callback(position);
-        }
-    
-        watchId = setInterval(avanzar, options.timeout);
-    
-        callback({ coords: null, status: 'iniciado' }); // Notificar inicio
-    
-        return {
-            clearWatch: () => clearInterval(watchId)
-        };
-   
+    const defaultOptions = {
+        enableHighAccuracy: true,
+        timeout: 1000, // Intervalo entre actualizaciones (ms)
+        maximumAge: 0,
+        velocidadMaxima: 90, // km/h
+        aceleracion: 5 // Aceleración en m/s²
+    };
+    options = { ...defaultOptions, ...options };
+
+    // Obtener coordenadas de la geometría
+    const routeCoords = geometria.getCoordinates();
+
+    if (!routeCoords || routeCoords.length < 2) {
+        errorCallback(new Error("La geometría debe contener al menos dos puntos."));
+        return null;
     }
+
+    let currentIndex = 0; // Índice del punto actual
+    let watchId;
+    let velocidadActual = 0; // Velocidad inicial en m/s
+    let tiempoTranscurrido = 0; // Tiempo total transcurrido en segundos
+
+    function avanzar() {
+        if (currentIndex >= routeCoords.length - 1) {
+            clearInterval(watchId);
+            console.log("Simulación completada.");
+            callback(null); // Notificar el final
+            return;
+        }
+
+        const [currentLon, currentLat] = ol.proj.toLonLat(routeCoords[currentIndex]);
+        const [nextLon, nextLat] = ol.proj.toLonLat(routeCoords[currentIndex + 1]);
+
+        const distancia = ol.sphere.getDistance([currentLon, currentLat], [nextLon, nextLat]);
+        const tiempoIntervalo = options.timeout / 1000; // Tiempo en segundos para cada intervalo
+
+        // Incrementar la velocidad con aceleración constante
+        velocidadActual += options.aceleracion * tiempoIntervalo;
+        const velocidadMaximaMS = options.velocidadMaxima * 1000 / 3600; // km/h a m/s
+        velocidadActual = Math.min(velocidadActual, velocidadMaximaMS); // Limitar al máximo
+
+        tiempoTranscurrido += tiempoIntervalo;
+
+        // Avanzar al siguiente punto si la distancia es menor o igual al desplazamiento
+        if (velocidadActual * tiempoTranscurrido >= distancia) {
+            currentIndex++;
+        }
+
+        // Calcular la posición actual interpolando entre puntos
+        const currentProyectada = ol.proj.fromLonLat([currentLon,currentLat]);
+        const nextProyectada = ol.proj.fromLonLat([nextLon,nextLat]);
+        const progress = Math.min(1, (velocidadActual * tiempoIntervalo) / distancia);
+        const currentLatInterpolado = currentProyectada[1] + progress * (nextProyectada[1] - currentProyectada[1]);
+        const currentLonInterpolado = currentProyectada[0] + progress * (nextProyectada[0] - currentProyectada[0]);
+        const currentLonLat = ol.proj.toLonLat([currentLonInterpolado,currentLatInterpolado]);
+        const position = {
+            coords: {
+                latitude: currentLonLat[1],
+                longitude: currentLonLat[0],
+                accuracy: options.enableHighAccuracy ? 5 : 50,
+                speed: velocidadActual // m/s
+            },
+            timestamp: Date.now()
+        };
+
+        callback(position);
+    }
+
+    watchId = setInterval(avanzar, options.timeout);
+
+    callback({ coords: null, status: 'iniciado' }); // Notificar inicio
+
+    return {
+        clearWatch: () => clearInterval(watchId)
+    };
 }
 
 function obtenerGeometria(mapa) {
