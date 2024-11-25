@@ -174,7 +174,7 @@ async function inicializarMapa() {
     inicializarEventosMapa();
     ponerMarcador(posicionWebMercator);
     ajustarZoom3km(posicionWebMercator);
-    actualizarPosicionSimulada()
+    actualizarPosicion()
 }
 
 function obtenerPosicion() {
