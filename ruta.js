@@ -422,7 +422,7 @@ function actualizarPosicion() {
             }
             datosRutaLocal.totalKms = odometro;
             document.getElementById('kmT').innerText=odometro.toFixed(2);
-            dicument.getElementById('kmR').innerText=kmsRuta.toFixed(2);
+            document.getElementById('kmR').innerText=kmsRuta.toFixed(2);
             grabarLocalStorage(datosRutaLocal);
             actualizarVelocimetro(velocidadKmH);
 
@@ -518,6 +518,7 @@ function actualizarInteraccionSeleccion() {
 
     // Manejo del evento de selección
     selectInteraction.on('select', function (event) {
+        document.getElementById('datosRuta').style.display='none';
         const selectedFeatures = event.selected; // Características seleccionadas
         const deselectedFeatures = event.deselected; // Características deseleccionadas
         
@@ -529,6 +530,7 @@ function actualizarInteraccionSeleccion() {
             const geometry = feature.getGeometry();
 
             if (geometry.getType() === 'LineString') {
+                document.getElementById('datosRuta').style.display='flex';
                 // Calcular la longitud en metros
                 const km = ol.sphere.getLength(geometry) / 1000;
                 document.getElementById('kms').innerText = km.toFixed(2);
