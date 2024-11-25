@@ -422,7 +422,7 @@ function actualizarPosicion() {
             }
             datosRutaLocal.totalKms = odometro;
             document.getElementById('kmT').innerText=odometro.toFixed(2);
-            document.getElementById('kmR').innerText=kmsRuta.toFixed(2);
+            document.getElementById('kmsR').innerText=kmsRuta.toFixed(2);
             grabarLocalStorage(datosRutaLocal);
             actualizarVelocimetro(velocidadKmH);
 
