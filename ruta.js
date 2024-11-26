@@ -44,7 +44,7 @@ async function inicializarMapa() {
     }
     odometro=datosRutaLocal.totalKms;
     document.getElementById('kmT').innerText=odometro.toFixed(2);
-
+    
     try {
         posicionLonLat = await obtenerPosicion();
         posicionWebMercator = ol.proj.fromLonLat(posicionLonLat);
